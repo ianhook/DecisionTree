@@ -1,0 +1,42 @@
+
+Here is the reason for why your old style `.dat' training
+data files will not work with the new version of this
+module:
+
+The old-style `.dat' files for supplying the training data
+to the module used the symbol '=>' to show the relationship
+between the feature names and the different possible values
+for the features at the top of a training file.  For version
+2.0, I needed the characters `>' and `<' for their `greater
+than' and `less than' semantics in the feature-value strings
+for numeric features.  This required that I use just the
+character `=' to show the relationships for which I had used
+`=>' in the previous versions of this module.
+
+Obviously, if you are able to replace `=>' by `=' through a
+global edit command, you should be able to use your old
+`.dat' files again.
+
+Apart from the above mentioned change, all the other
+formatting restrictions that applied to the `.dat' training
+files for the previous versions of this module continue to
+apply for the case of the new version.
+
+In general, a `.dat' training file consists of four
+sections: (1) A comment block at the top.  Each line of this
+block must begin with the character `#'.  (2) A line that
+begins with the string `Class names:', with the rest of the
+line containing the names of the classes. (3) Class names
+must be followed by a declarations of the features and their
+possible values.  This section of the file must begin with
+the string "Feature names and their values:". (4) The
+training data.  This part of the file must begin with the
+string `Training Data:'.  
+
+See the file 
+
+   training.dat
+
+for how a `.dat' file must be formatted.
+
+

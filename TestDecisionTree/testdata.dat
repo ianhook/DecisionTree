@@ -1,0 +1,49 @@
+# Do not delete this example test data file.
+
+# REQUIRED LINE FOLLOWS (the first uncommented line below):
+# This line shown below must begin with the string 
+#
+#             "Feature Order For Data:"  
+#
+# What comes after this string can be any number of feature labels.  
+# The feature values shown in the table in the rest of the file will 
+# be considered to be in same order as shown in the next line.
+
+
+Feature Order For Data: videoAddiction exercising smoking fatIntake
+
+sample_0         none             never            light            low
+sample_1         none             occasionally     never            medium
+sample_2         low              regularly        never            heavy
+sample_3         heavy            never            never            medium
+sample_4         medium           never            medium           low
+sample_5         medium           regularly        medium           medium
+sample_6         medium           never            never            heavy
+sample_7         medium           never            never            heavy
+sample_8         heavy            never            medium           low
+sample_9         low              occasionally     heavy            heavy
+sample_10        none             never            never            low
+sample_11        medium           never            heavy            low
+sample_12        heavy            occasionally     medium           heavy
+sample_13        heavy            never            medium           heavy
+sample_14        low              never            light            heavy
+sample_15        low              regularly        light            medium
+sample_16        low              occasionally     medium           medium
+sample_17        low              never            light            low
+sample_18        medium           regularly        light            low
+sample_19        low              never            never            low
+sample_20        medium           never            light            medium
+sample_21        medium           never            never            low
+sample_22        none             occasionally     never            heavy
+sample_23        heavy            regularly        medium           medium
+sample_24        none             never            medium           heavy
+sample_25        heavy            occasionally     light            heavy
+sample_26        medium           never            never            heavy
+sample_27        low              regularly        light            medium
+sample_28        low              occasionally     heavy            low
+sample_29        low              occasionally     never            medium
+sample_30        medium           occasionally     never            medium
+sample_31        heavy            never            medium           medium
+sample_32        low              never            medium           low
+sample_33        none             never            never            low
+sample_34        heavy            never            never            low

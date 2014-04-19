@@ -1,0 +1,16 @@
+
+Your CSV files for the training data must conform to the
+following format:
+
+    The first row must name the features.  It must begin
+    with the empty string `""' as shown in the example file
+    named below.  The first column for all subsequent rows
+    must carry a unique integer identifier for each data
+    record.
+
+    See the file 
+
+              stage3cancer.csv
+
+    for an example.
+

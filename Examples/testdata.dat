@@ -1,0 +1,44 @@
+
+# REQUIRED LINE FOLLOWS (the first uncommented line below):
+# This line shown below must begin with the string 
+#
+#             "Feature Order For Data:"  
+#
+# What comes after this string can be any number of feature labels.  
+# The feature values shown in the table in the rest of the file will 
+# be considered to be in same order as shown in the next line.
+                
+
+
+Feature Order For Data: exercising fatIntake smoking videoAddiction 
+
+sample_0     never         heavy         heavy         heavy         
+sample_1     never         heavy         never         medium        
+sample_2     regularly     low           never         medium        
+sample_3     occasionally  low           medium        low           
+sample_4     never         medium        light         none          
+sample_5     never         heavy         never         heavy         
+sample_6     regularly     low           medium        heavy         
+sample_7     never         low           light         medium        
+sample_8     regularly     heavy         heavy         heavy         
+sample_9     occasionally  heavy         heavy         low           
+sample_10    never         heavy         heavy         heavy         
+sample_11    regularly     heavy         heavy         none          
+sample_12    regularly     heavy         heavy         heavy         
+sample_13    occasionally  medium        never         low           
+sample_14    regularly     heavy         heavy         medium        
+sample_15    occasionally  low           light         low           
+sample_16    occasionally  low           never         none          
+sample_17    occasionally  low           never         medium        
+sample_18    occasionally  medium        heavy         heavy         
+sample_19    never         medium        never         low           
+sample_20    occasionally  low           never         none          
+sample_21    regularly     heavy         heavy         heavy         
+sample_22    regularly     medium        heavy         low           
+sample_23    occasionally  medium        heavy         medium        
+sample_24    regularly     medium        heavy         low           
+sample_25    occasionally  low           medium        none          
+sample_26    occasionally  low           never         medium        
+sample_27    never         low           heavy         none          
+sample_28    regularly     medium        never         medium        
+sample_29    never         heavy         heavy         low           

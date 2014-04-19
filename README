@@ -1,0 +1,22 @@
+I forked this kind of jankily because I had some issues using this
+for a project I was working on, and rather than find a different 
+library I thought I fix this one.
+
+I downloaded the source from https://pypi.python.org/pypi/DecisionTree/2.2.1
+
+The original README follows
+
+------------------------------------------------------------------------
+
+The DecisionTree module is a Python implementation for
+constructing a decision tree from multidimensional training
+data and for using the decision tree thus constructed for
+classifying new data.
+
+It is highly recommended that you read the README in the 
+'Examples' directory if you wish to become familiar with
+this module.
+
+If there are any questions about this module, contact the
+author at 'kak@purdue.edu' with the string DecisionTree in
+the subject line to get past his spam filter.
