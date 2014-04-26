@@ -1305,14 +1305,18 @@ class DecisionTree(object):
         construct_dt_and_classify_one_sample_caseX.py in that subdirectory.
         '''
         if not self._check_names_used(features_and_values):
-            raise ValueError("Error in the names you have used for features and/or values") 
+            raise ValueError("Error in the names you have used for features and/or values {0}".format(features_and_values)) 
         new_features_and_values = []
         pattern = r'(\S+)\s*=\s*(\S+)'
         for feature_and_value in features_and_values:
             m = re.search(pattern, feature_and_value)
+            if m is None:
+                continue
             feature,value = m.group(1),m.group(2)
             value = convert(value)
             newvalue = value
+            if value == 'NA':
+                continue
             if ((feature not in self._prob_distribution_numeric_features_dict) and
                 (all(isinstance(x,float) for x in self._features_and_unique_values_dict[feature]))):
                 newvalue = closest_sampling_point(value, self._features_and_unique_values_dict[feature])
@@ -1694,7 +1698,7 @@ class DecisionTree(object):
         numeric feature.  For a numeric feature, all possible sampling points
         relevant to the node in question are considered as candidates for thresholds.
         '''
-        pattern1 = r'(.+)=(.+)'
+        pattern1 = r'(.+)=(.*)'
         pattern2 = r'(.+)<(.+)'
         pattern3 = r'(.+)>(.+)'
         all_symbolic_features = []
@@ -1758,16 +1762,16 @@ class DecisionTree(object):
                 if self._debug3: print("\nBFC2 values for %s are %s                " % (feature_name, values))
                 newvalues = []
                 if feature_name in true_numeric_types_feature_names:
-                    if upperbound[feature_name] and lowerbound[feature_name] and \
+                    if upperbound[feature_name] is not None and lowerbound[feature_name] is not None and \
                                                  lowerbound[feature_name] >= upperbound[feature_name]:
                         continue
-                    elif upperbound[feature_name] and lowerbound[feature_name] and \
+                    elif upperbound[feature_name]is not None and lowerbound[feature_name] is not None and \
                                                        lowerbound[feature_name] < upperbound[feature_name]:
                         newvalues = [x for x in values \
                                              if lowerbound[feature_name] < x <= upperbound[feature_name]]
-                    elif upperbound[feature_name]:
+                    elif upperbound[feature_name] is not None:
                         newvalues = [x for x in values if x <= upperbound[feature_name]]
-                    elif lowerbound[feature_name]:
+                    elif lowerbound[feature_name] is not None:
                         newvalues = [x for x in values if x > lowerbound[feature_name]]
                     else:
                         sys.exit("Error in bound specifications in best feature calculator")
@@ -2011,12 +2015,13 @@ class DecisionTree(object):
 
     def probability_of_feature_value(self, feature_name, value):
         value = convert(value)
-        if value and (feature_name in self._sampling_points_for_numeric_feature_dict):
+        if value is not None and (feature_name in self._sampling_points_for_numeric_feature_dict):
             value = closest_sampling_point(convert(value), \
                        self._sampling_points_for_numeric_feature_dict[feature_name])
-        if value:
+        if value is not None:
             feature_and_value = "".join([feature_name, "=", str(convert(value))])
-        if value and (feature_and_value in self._probability_cache):
+        if value is not None and (feature_and_value in self._probability_cache):
+            #print '{0} {1} was cached: {2}'.format(feature_name, value, self._probability_cache[feature_and_value])
             return self._probability_cache[feature_and_value]
         histogram_delta = num_of_hist_bins = valuerange = diffrange = None
         if feature_name in self._numeric_features_valuerange_dict:
@@ -2042,6 +2047,7 @@ class DecisionTree(object):
         if feature_name in self._numeric_features_valuerange_dict:
             if self._feature_values_how_many_uniques_dict[feature_name] > \
                                        self._symbolic_to_numeric_cardinality_threshold:
+                #print 'true numbers'
                 sampling_points_for_feature = \
                          self._sampling_points_for_numeric_feature_dict[feature_name]
                 counts_at_sampling_points = [0] * len(sampling_points_for_feature)
@@ -2063,11 +2069,12 @@ class DecisionTree(object):
                                                       map(str, sampling_points_for_feature)))
                 for i in range(0, len(values_for_feature)):
                     self._probability_cache[values_for_feature[i]] = probs[i]
-                if value and feature_and_value in self._probability_cache:
+                if value is not None and feature_and_value in self._probability_cache:
                     return self._probability_cache[feature_and_value]
                 else:
                     return 0
             else:
+                #print 'numeric symbols'
                 # This section is for those numeric features that are treated symbolically
                 values_for_feature = list(set(self._features_and_values_dict[feature_name]))
                 values_for_feature = list(filter(lambda x: x != 'NA', values_for_feature))
@@ -2089,26 +2096,27 @@ class DecisionTree(object):
                 probs = [x / (1.0 * total_counts) for x in value_counts]
                 for i in range(0, len(values_for_feature)):
                     self._probability_cache[values_for_feature[i]] = probs[i]
-                if value and feature_and_value in self._probability_cache:
+                if value is not None and feature_and_value in self._probability_cache:
                     return self._probability_cache[feature_and_value]
                 else:
                     return 0
         else:
+            #print 'pure symbols'
             # This section is only for purely symbolic features:  
-            values_for_feature = self._features_and_values_dict[feature_name]
+            values_for_feature = list(set(self._features_and_values_dict[feature_name]))
             values_for_feature = list(map(lambda x: feature_name + "=" + x, values_for_feature))
             value_counts = [0] * len(values_for_feature)
             for sample in sorted(self._training_data_dict.keys(), \
                     key = lambda x: sample_index(x) ):
                 features_and_values = self._training_data_dict[sample]
                 for i in range(0, len(values_for_feature)):
-                    for current_value in features_and_values:
+                    for current_value in (features_and_values):
                         if values_for_feature[i] == current_value:
                             value_counts[i] += 1 
             for i in range(0, len(values_for_feature)):
                 self._probability_cache[values_for_feature[i]] = \
                           value_counts[i] / (1.0 * len(self._training_data_dict))
-            if value and feature_and_value in self._probability_cache:
+            if value is not None and feature_and_value in self._probability_cache:
                 return self._probability_cache[feature_and_value]
             else:
                 return 0
@@ -2121,6 +2129,7 @@ class DecisionTree(object):
                        self._sampling_points_for_numeric_feature_dict[feature_name])
         feature_value_class = "".join([feature_name,"=",str(feature_value),"::",class_name])
         if feature_value_class in self._probability_cache:
+            #print '{0} {1} given {3} was cached: {2}'.format(feature_name, feature_value, self._probability_cache[feature_value_class], class_name)
             return self._probability_cache[feature_value_class]
         if feature_name in self._numeric_features_valuerange_dict:
             if self._feature_values_how_many_uniques_dict[feature_name] > \
@@ -2137,6 +2146,7 @@ class DecisionTree(object):
         if feature_name in self._numeric_features_valuerange_dict:
             if self._feature_values_how_many_uniques_dict[feature_name] > \
                                         self._symbolic_to_numeric_cardinality_threshold:
+                #print 'class true number'
                 sampling_points_for_feature = self._sampling_points_for_numeric_feature_dict[feature_name]
                 counts_at_sampling_points = [0] * len(sampling_points_for_feature)
                 actual_feature_values_for_samples_in_class = []
@@ -2167,6 +2177,7 @@ class DecisionTree(object):
                 else:
                     return 0
             else:
+                #print 'class numeric symbol'
                 # We now take care of numeric features with a small number of unique values
                 values_for_feature = list(set(self._features_and_values_dict[feature_name]))
                 values_for_feature = list(filter(lambda x: x != 'NA', values_for_feature))
@@ -2195,6 +2206,7 @@ class DecisionTree(object):
                 else:
                     return 0
         else:
+            #print 'class prue symbol'
             # This section is for purely symbolic features
             values_for_feature = list(set(self._features_and_values_dict[feature_name]))
             values_for_feature = \
@@ -2230,7 +2242,8 @@ class DecisionTree(object):
         if feature_threshold_combo in self._probability_cache:
             return self._probability_cache[feature_threshold_combo]
         all_values = list(filter(lambda x: x != 'NA', self._features_and_values_dict[feature_name]))
-        all_values_less_than_threshold = list(filter(lambda x: x <= threshold, all_values))
+        #we convert x to a str and back here so that the precision matches the threshold which has alread done this
+        all_values_less_than_threshold = list(filter(lambda x: float(str(x)) <= threshold, all_values))
         probability = 1.0 * len(all_values_less_than_threshold) / len(all_values)
         self._probability_cache[feature_threshold_combo] = probability
         return probability
@@ -2248,7 +2261,7 @@ class DecisionTree(object):
         actual_feature_values_for_samples_in_class = []
         for sample in data_samples_for_class:
             for feature_and_value in self._training_data_dict[sample]:
-                pattern = r'(.+)=(.+)'
+                pattern = r'(.+)=(.*)'
                 m = re.search(pattern, feature_and_value)
                 feature,value = m.group(1),m.group(2)
                 if feature == feature_name and value != 'NA':
@@ -2272,9 +2285,9 @@ class DecisionTree(object):
         if sequence in self._probability_cache:
             return self._probability_cache[sequence]
         probability = None
-        pattern1 = r'(.+)=(.+)'
-        pattern2 = r'(.+)<(.+)'
-        pattern3 = r'(.+)>(.+)'
+        pattern1 = r'(.+)=(.*)'
+        pattern2 = r'(.+)<(.*)'
+        pattern3 = r'(.+)>(.*)'
         true_numeric_types = []        
         true_numeric_types_feature_names = []
         symbolic_types = []
@@ -2302,17 +2315,26 @@ class DecisionTree(object):
         # threshold for each of the numeric features that are in play at the current node:
         upperbound = {feature : None for feature in true_numeric_types_feature_names}
         lowerbound = {feature : None for feature in true_numeric_types_feature_names}
+        #print 'probability_of_a_sequence_of_features_and_values_or_thresholds'
+        #print true_numeric_types_feature_names
+        #print symbolic_types_feature_names
+        #print array_of_features_and_values_or_thresholds
+        #print bounded_intervals_numeric_types
         for item in bounded_intervals_numeric_types:
             if item[1] == '>':
                 lowerbound[item[0]] = float(item[2])
             else:
                 upperbound[item[0]] = float(item[2])
+        #print lowerbound
+        #print upperbound
         for feature_name in true_numeric_types_feature_names:
-            if lowerbound[feature_name] and upperbound[feature_name] \
+            #print 'calculating: {0}, {1} <> {3} : {2}'.format(feature,lowerbound[feature_name], probability, upperbound[feature_name])
+            if lowerbound[feature_name] is not None and upperbound[feature_name] is not None \
                           and upperbound[feature_name] <= lowerbound[feature_name]:
+                #print 'this seems like an error on {0}'.format(feature)
                 return 0
-            elif lowerbound[feature_name] and upperbound[feature_name]:
-                if not probability:
+            elif lowerbound[feature_name] is not None and upperbound[feature_name] is not None:
+                if probability is None:
                     probability = self.probability_of_feature_less_than_threshold(feature_name, \
                                   upperbound[feature_name]) - \
                           self.probability_of_feature_less_than_threshold(feature_name, \
@@ -2322,30 +2344,34 @@ class DecisionTree(object):
                                   upperbound[feature_name]) - \
                           self.probability_of_feature_less_than_threshold(feature_name, \
                                                                       lowerbound[feature_name]))
-            elif upperbound[feature_name] and not lowerbound[feature_name]:
-                if not probability:
+            elif upperbound[feature_name] is not None and lowerbound[feature_name] is None:
+                if probability is None:
                     probability = self.probability_of_feature_less_than_threshold(feature_name, \
                                                                      upperbound[feature_name])
                 else:
                     probability *= self.probability_of_feature_less_than_threshold(feature_name, \
                                                                      upperbound[feature_name])
-            elif lowerbound[feature_name] and not upperbound[feature_name]:
-                if not probability:
+            elif lowerbound[feature_name] is not None and upperbound[feature_name] is None:
+                if probability is None:
                     probability = 1.0 -self.probability_of_feature_less_than_threshold(feature_name, \
                                                                      lowerbound[feature_name])
                 else:
                     probability *= (1.0 - self.probability_of_feature_less_than_threshold(feature_name, \
                                                                      lowerbound[feature_name]))
             else:
-                sys.exit("Ill formatted call to 'probability_of_sequence' method")
+                sys.exit("Ill formatted call to 'probability_of_sequence' method {0} {1} {2}".format(feature_name, lowerbound[feature_name], upperbound[feature_name]))
+            #print 'numeric prob: {0}'.format(probability)
         for feature_and_value in symbolic_types:
+            #print feature_and_value
             if re.search(pattern1, feature_and_value):      
                 m = re.search(pattern1, feature_and_value)
                 feature,value = m.group(1),m.group(2)
-                if not probability:
+                #print 'calculating: {0}, {1} : {2}'.format(feature, value, probability)
+                if probability is None:
                     probability = self.probability_of_feature_value(feature, value)
                 else:
                     probability *= self.probability_of_feature_value(feature, value)
+                #print 'symbolic prob: {0}'.format(probability)
         self._probability_cache[sequence] = probability
         return probability
 
@@ -2361,9 +2387,9 @@ class DecisionTree(object):
         if sequence_with_class in self._probability_cache:
             return self._probability_cache[sequence_with_class]
         probability = None
-        pattern1 = r'(.+)=(.+)'
-        pattern2 = r'(.+)<(.+)'
-        pattern3 = r'(.+)>(.+)'
+        pattern1 = r'(.+)=(.*)'
+        pattern2 = r'(.+)<(.*)'
+        pattern3 = r'(.+)>(.*)'
         true_numeric_types = []        
         true_numeric_types_feature_names = []        
         symbolic_types = []
@@ -2391,17 +2417,21 @@ class DecisionTree(object):
         # threshold for each of the numeric features that are in play at the current node:
         upperbound = {feature : None for feature in true_numeric_types_feature_names}
         lowerbound = {feature : None for feature in true_numeric_types_feature_names}
+        #print 'probability_of_a_sequence_of_features_and_values_or_thresholds_given_class'
+        #print bounded_intervals_numeric_types
         for item in bounded_intervals_numeric_types:
             if item[1] == '>':
                 lowerbound[item[0]] = float(item[2])
             else:
                 upperbound[item[0]] = float(item[2])
         for feature_name in true_numeric_types_feature_names:
-            if lowerbound[feature_name] and upperbound[feature_name] \
+            #print 'calculating: {0}, {1} <> {4} : {2} :: {3}'.format(feature,lowerbound[feature_name], probability, class_name, upperbound[feature_name])
+            if lowerbound[feature_name] is not None and upperbound[feature_name] is not None \
                           and upperbound[feature_name] <= lowerbound[feature_name]:
+                #print 'this seems like an error on {0} :: class_name'.format(feature, class_name)
                 return 0
-            elif lowerbound[feature_name] and upperbound[feature_name]:
-                if not probability:
+            elif lowerbound[feature_name] is not None and upperbound[feature_name] is not None:
+                if probability is None:
                     probability = self.probability_of_feature_less_than_threshold_given_class(feature_name, \
                                                 upperbound[feature_name], class_name) - \
                           self.probability_of_feature_less_than_threshold_given_class(feature_name, \
@@ -2411,15 +2441,15 @@ class DecisionTree(object):
                                   upperbound[feature_name], class_name) - \
                           self.probability_of_feature_less_than_threshold_given_class(feature_name, \
                                                         lowerbound[feature_name], class_name))
-            elif upperbound[feature_name] and not lowerbound[feature_name]:
-                if not probability:
+            elif upperbound[feature_name] is not None and not lowerbound[feature_name]:
+                if probability is None:
                     probability = self.probability_of_feature_less_than_threshold_given_class(feature_name, \
                                                          upperbound[feature_name], class_name)
                 else:
                     probability *= self.probability_of_feature_less_than_threshold_given_class(feature_name, \
                                                          upperbound[feature_name], class_name)
-            elif lowerbound[feature_name] and not upperbound[feature_name]:
-                if not probability:
+            elif lowerbound[feature_name] is not None and not upperbound[feature_name]:
+                if probability is None:
                     probability = 1.0 - \
                           self.probability_of_feature_less_than_threshold_given_class(feature_name, \
                                                          lowerbound[feature_name], class_name)
@@ -2428,15 +2458,18 @@ class DecisionTree(object):
                           self.probability_of_feature_less_than_threshold_given_class(feature_name, \
                                                          lowerbound[feature_name], class_name))
             else:
-                sys.exit("Ill formatted call to 'probability of sequence with class' method")
+                sys.exit("Ill formatted call to 'probability of sequence with class' method {0} {1} {2}".format(feature_name, upperbound[feature_name], lowerbound[feature_name]))
+            #print 'numeric prob: {0}'.format(probability)
         for feature_and_value in symbolic_types:
             if re.search(pattern1, feature_and_value):      
                 m = re.search(pattern1, feature_and_value)
                 feature,value = m.group(1),m.group(2)
-                if not probability:
+                #print 'calculating: {0}, {1} : {2} :: {3}'.format(feature, value, probability, class_name)
+                if probability is None:
                     probability = self.probability_of_feature_value_given_class(feature, value, class_name)
                 else:
                     probability *= self.probability_of_feature_value_given_class(feature, value, class_name)
+                #print 'symbolic prob: {0}'.format(probability)
         self._probability_cache[sequence_with_class] = probability
         return probability
 
@@ -2458,6 +2491,9 @@ class DecisionTree(object):
             prob_of_feature_sequence = self.probability_of_a_sequence_of_features_and_values_or_thresholds(\
                                                       array_of_features_and_values_or_thresholds)
             if not prob_of_feature_sequence: 
+                print class_name
+                print array_of_features_and_values_or_thresholds
+                print prob_of_feature_sequence
                 sys.exit('''PCS Something is wrong with your sequence of feature values and thresholds in '''
                          '''probability_of_a_class_given_sequence_of_features_and_values_or_thresholds()''')
             prior = self._class_priors_dict[self._class_names[i]] 
@@ -2488,7 +2524,11 @@ class DecisionTree(object):
             if feature not in self._numeric_features_valuerange_dict:
                 values.append(self._features_and_unique_values_dict[feature])
         print("Number of features: " + str(num_of_features))
-        max_num_values = max(list(map(len, values)))
+        max_list = list(map(len, values))
+        if len(max_list) > 0:
+            max_num_values = max(max_list)
+        else:
+            max_num_values = 0
         print("Largest number of values for symbolic features is: " + str(max_num_values))
         estimated_number_of_nodes = max_num_values ** num_of_features
         print('''\nWORST CASE SCENARIO: The decision tree COULD have as many as %s '''
@@ -2500,14 +2540,14 @@ class DecisionTree(object):
             print('''THIS IS WAY TOO MANY NODES. Consider using a relatively '''
                   '''large value for entropy_threshold and/or a small value for '''
                   '''for max_depth_desired to reduce the number of nodes created''')
-            ans = None
-            if sys.version_info[0] == 3:
-                ans = input("\nDo you wish to continue? Enter 'y' if yes:  ")
-            else:
-                ans = raw_input("\nDo you wish to continue? Enter 'y' if yes:  ")
-            ans = ans.strip()
-            if ans != 'y':
-                sys.exit(0)
+            #ans = None
+            #if sys.version_info[0] == 3:
+            #    ans = input("\nDo you wish to continue? Enter 'y' if yes:  ")
+            #else:
+            #    ans = raw_input("\nDo you wish to continue? Enter 'y' if yes:  ")
+            #ans = ans.strip()
+            #if ans != 'y':
+            #    sys.exit(0)
  
     def _check_names_used(self, features_and_values_test_data):
         '''
@@ -2515,12 +2555,13 @@ class DecisionTree(object):
         sample that you want to classify with the decision tree.
         '''
         for feature_and_value in features_and_values_test_data:
-            pattern = r'(\S+)\s*=\s*(\S+)'
+            pattern = r'(\S+)\s*=\s*(\S*)'
             m = re.search(pattern, feature_and_value)
             feature,value = m.group(1),m.group(2)
             if feature is None or value is None:
                 raise ValueError("Your test data has formatting error")
             if feature not in self._feature_names:
+                print feature
                 return 0
         return 1
 
